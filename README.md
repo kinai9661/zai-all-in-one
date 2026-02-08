@@ -93,12 +93,24 @@ Z All-in-One API 是一個將 Z.ai 服務（聊天、圖像、音頻）包裝成
 npm install
 ```
 
-2. Run locally / 本地執行：
+2. Configure environment variables / 設定環境變量：
+
+Create a `.dev.vars` file for local development / 建立本地開發用的 `.dev.vars` 檔案：
+```bash
+# .dev.vars
+DEFAULT_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+For production deployment, set the environment variable in Cloudflare dashboard / 生產環境部署時，在 Cloudflare 控制台設定環境變量：
+- Go to Cloudflare Dashboard → Workers & Pages → Your Worker → Settings → Variables
+- Add `DEFAULT_API_KEY` with your session token value
+
+3. Run locally / 本地執行：
 ```bash
 wrangler dev
 ```
 
-3. Deploy to Cloudflare / 部署到 Cloudflare：
+4. Deploy to Cloudflare / 部署到 Cloudflare：
 ```bash
 wrangler deploy
 ```
@@ -113,6 +125,41 @@ wrangler deploy
 4. Copy the `session` cookie value (starts with "ey") / 複製 `session` cookie 的值（以 "ey" 開頭）
 
 ### Using Tokens / 使用 Token
+
+There are two ways to provide authentication / 有兩種方式提供身份驗證：
+
+#### Method 1: Environment Variable (Recommended) / 方法 1：環境變量（推薦）
+
+Set `DEFAULT_API_KEY` in your Cloudflare Worker environment variables / 在 Cloudflare Worker 環境變量中設定 `DEFAULT_API_KEY`：
+
+```bash
+# In .dev.vars for local development
+DEFAULT_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Or in Cloudflare Dashboard for production
+# Settings → Variables → Add Variable
+# Name: DEFAULT_API_KEY
+# Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Advantages / 優點：**
+- All requests automatically authenticated / 所有請求自動驗證
+- No need to pass Authorization header / 不需要傳遞 Authorization header
+- Secure server-side storage / 安全的伺服器端儲存
+
+#### Method 2: Authorization Header / 方法 2：Authorization Header
+
+Pass the token in the Authorization header / 在 Authorization header 中傳遞 token：
+
+```bash
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Priority / 優先順序：**
+1. Authorization header (if provided) / Authorization header（如果提供）
+2. Environment variable `DEFAULT_API_KEY` / 環境變量 `DEFAULT_API_KEY`
+
+### Service Requirements / 服務需求
 
 - **Chat**: Optional (use "free" for anonymous) / 可選（使用 "free" 進行匿名訪問）
 - **Image**: Required (session token) / 必需（session token）
@@ -195,6 +242,8 @@ Returns all available models for chat, image, and audio. / 返回聊天、圖像
 - Image generation requires valid session token / 圖像生成需要有效的 session token
 - Audio supports custom voice cloning with uploaded samples / 音頻支援使用上傳的樣本進行自定義語音克隆
 - All endpoints support CORS for web applications / 所有端點都支援 CORS，適用於網頁應用程式
+- **Environment variable `DEFAULT_API_KEY` provides server-side authentication** / **環境變量 `DEFAULT_API_KEY` 提供伺服器端驗證**
+- Authorization header overrides environment variable / Authorization header 會覆蓋環境變量
 - Tokens are stored locally in browser (not on server) / Token 儲存在瀏覽器本地（不在伺服器上）
 - Web UI is fully localized in Traditional Chinese / Web 介面已完全本地化為繁體中文
 - API Key is saved in localStorage and persists across page refreshes / API Key 儲存在 localStorage 中，重新整理頁面後仍然有效

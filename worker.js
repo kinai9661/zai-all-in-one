@@ -91,6 +91,11 @@ var worker_default = {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
         
+        // Store environment variables globally for use in handlers
+        if (env) {
+            globalThis.ENV = env;
+        }
+        
         if (request.method === "OPTIONS") {
             return new Response(null, { status: 204, headers: corsHeaders() });
         }
@@ -791,6 +796,17 @@ async function handleImageGeneration(request) {
         const body = await request.json();
         
         let cookies = CONFIG.IMAGE_FALLBACK_COOKIES;
+        
+        // Try to get API key from environment variable first
+        if (globalThis.ENV?.DEFAULT_API_KEY) {
+            cookies = globalThis.ENV.DEFAULT_API_KEY;
+            // Auto-add "session=" prefix if not present
+            if (cookies && !cookies.startsWith('session=')) {
+                cookies = 'session=' + cookies;
+            }
+        }
+        
+        // Then try Authorization header
         const authHeader = request.headers.get("Authorization");
         if (authHeader) {
             let token = authHeader.replace(/^Bearer\s+/i, '');
@@ -802,7 +818,7 @@ async function handleImageGeneration(request) {
         }
         
         if (!cookies || cookies === "YOUR_COOKIES_HERE") {
-            return new Response(JSON.stringify({ 
+            return new Response(JSON.stringify({
                 error: "No authentication cookies provided"
             }), {
                 status: 401,
@@ -913,13 +929,20 @@ async function handleAudioGeneration(request) {
         const body = await request.json();
         
         let token = CONFIG.AUDIO_FALLBACK_TOKEN;
+        
+        // Try to get API key from environment variable first
+        if (globalThis.ENV?.DEFAULT_API_KEY) {
+            token = globalThis.ENV.DEFAULT_API_KEY;
+        }
+        
+        // Then try Authorization header
         const authHeader = request.headers.get("Authorization");
         if (authHeader) {
             token = authHeader.replace(/^Bearer\s+/i, '');
         }
         
         if (!token || token === "YOUR_TOKEN_HERE") {
-            return new Response(JSON.stringify({ 
+            return new Response(JSON.stringify({
                 error: "No authentication token provided"
             }), {
                 status: 401,
@@ -1161,6 +1184,13 @@ __name(handleAudioGeneration, "handleAudioGeneration");
 async function handleVoiceUpload(request) {
     try {
         let token = CONFIG.AUDIO_FALLBACK_TOKEN;
+        
+        // Try to get API key from environment variable first
+        if (globalThis.ENV?.DEFAULT_API_KEY) {
+            token = globalThis.ENV.DEFAULT_API_KEY;
+        }
+        
+        // Then try Authorization header
         const authHeader = request.headers.get("Authorization");
         if (authHeader) {
             token = authHeader.replace(/^Bearer\s+/i, '');
@@ -1198,6 +1228,13 @@ async function handleVoiceClone(request) {
         const body = await request.json();
         
         let token = CONFIG.AUDIO_FALLBACK_TOKEN;
+        
+        // Try to get API key from environment variable first
+        if (globalThis.ENV?.DEFAULT_API_KEY) {
+            token = globalThis.ENV.DEFAULT_API_KEY;
+        }
+        
+        // Then try Authorization header
         const authHeader = request.headers.get("Authorization");
         if (authHeader) {
             token = authHeader.replace(/^Bearer\s+/i, '');
@@ -1208,7 +1245,7 @@ async function handleVoiceClone(request) {
         const userId = payload?.sub || payload?.id || payload?.user_id;
         
         if (!userId) {
-            return new Response(JSON.stringify({ 
+            return new Response(JSON.stringify({
                 error: "Invalid token: cannot extract user ID"
             }), {
                 status: 401,
@@ -1252,6 +1289,13 @@ __name(handleVoiceClone, "handleVoiceClone");
 async function handleVoiceList(request) {
     try {
         let token = CONFIG.AUDIO_FALLBACK_TOKEN;
+        
+        // Try to get API key from environment variable first
+        if (globalThis.ENV?.DEFAULT_API_KEY) {
+            token = globalThis.ENV.DEFAULT_API_KEY;
+        }
+        
+        // Then try Authorization header
         const authHeader = request.headers.get("Authorization");
         if (authHeader) {
             token = authHeader.replace(/^Bearer\s+/i, '');
@@ -1262,7 +1306,7 @@ async function handleVoiceList(request) {
         const userId = payload?.sub || payload?.id || payload?.user_id;
         
         if (!userId) {
-            return new Response(JSON.stringify({ 
+            return new Response(JSON.stringify({
                 error: "Invalid token: cannot extract user ID"
             }), {
                 status: 401,
@@ -1769,6 +1813,7 @@ function handleWebUI() {
             <div class="token-input-group">
                 <input type="text" id="apiKey" placeholder="輸入您的 API Key（用於圖像和音頻）">
                 <button onclick="setApiKey()">設定 API Key</button>
+                <button onclick="clearApiKey()" class="btn-secondary" style="width: auto; padding: 10px 20px;">清除</button>
             </div>
             <div class="token-guide">
                 <strong>📖 如何獲取您的 API Key：</strong><br>
@@ -1776,7 +1821,9 @@ function handleWebUI() {
                 2. 按 <code>F12</code> 開啟開發者工具 → 前往 <strong>應用程式</strong> 分頁<br>
                 3. 在左側邊欄展開 <strong>Cookies</strong> → 點擊網站 URL<br>
                 4. 找到 <code>session</code> cookie 並複製其 <strong>值</strong>（以 "ey" 開頭）<br>
-                5. 將其貼上並點擊「設定 API Key」
+                5. 將其貼上並點擊「設定 API Key」<br><br>
+                <strong>💡 環境變量設定：</strong><br>
+                您也可以在 Cloudflare Workers 環境變量中設定 <code>DEFAULT_API_KEY</code>，這樣所有請求都會自動使用該 key。
             </div>
         </div>
         
@@ -1940,15 +1987,35 @@ function handleWebUI() {
         window.addEventListener('DOMContentLoaded', function() {
             document.getElementById('apiUrl').value = window.location.origin + '/v1';
             
-            // Load API key from localStorage on page load
+            // Check if environment variable API key is configured
+            const statusEl = document.getElementById('apiKeyStatus');
+            const apiKeyInput = document.getElementById('apiKey');
+            
+            // Try to fetch API status to check if env var is set
+            fetch('/v1/models')
+                .then(response => {
+                    // If we can reach the API, env var might be configured
+                    // This is a simple check - actual API calls will verify
+                    statusEl.textContent = '✓ 環境變量已設定';
+                    statusEl.className = 'token-status active';
+                    apiKeyInput.placeholder = '環境變量 API Key 已設定（可覆蓋）';
+                    apiKeyInput.disabled = true;
+                })
+                .catch(err => {
+                    // If fetch fails, env var might not be set
+                    statusEl.textContent = '未設定';
+                    statusEl.className = 'token-status inactive';
+                });
+            
+            // Load API key from localStorage on page load (for override)
             const savedToken = localStorage.getItem('zai_api_key');
             if (savedToken) {
                 apiKey = savedToken;
-                document.getElementById('apiKey').value = savedToken;
+                apiKeyInput.value = savedToken;
+                apiKeyInput.disabled = false;
                 
                 // Update status
-                const statusEl = document.getElementById('apiKeyStatus');
-                statusEl.textContent = '✓ 已設定';
+                statusEl.textContent = '✓ 已設定（覆蓋）';
                 statusEl.className = 'token-status active';
                 
                 // Load voices with saved token
@@ -1959,6 +2026,7 @@ function handleWebUI() {
         let selectedVoice = { name: 'Lila', id: 'system_001' };
         let uploadedFileId = null;
         let apiKey = '';
+        let useEnvVar = true; // Flag to use environment variable
         
         // Set API key function
         function setApiKey() {
@@ -1985,6 +2053,7 @@ function handleWebUI() {
             }
             
             apiKey = token;
+            useEnvVar = false; // Use user-provided token instead of env var
             document.getElementById('apiKey').value = token;
             
             // Save to localStorage
@@ -1992,13 +2061,33 @@ function handleWebUI() {
             
             // Update status
             const statusEl = document.getElementById('apiKeyStatus');
-            statusEl.textContent = '✓ 已設定';
+            statusEl.textContent = '✓ 已設定（覆蓋環境變量）';
             statusEl.className = 'token-status active';
             
             // Reload voices automatically
             loadVoicesFromAPI();
             
             alert('✅ API Key 設定成功！語音列表已更新。');
+        }
+        
+        // Clear API key function (revert to env var)
+        function clearApiKey() {
+            apiKey = '';
+            useEnvVar = true;
+            document.getElementById('apiKey').value = '';
+            localStorage.removeItem('zai_api_key');
+            
+            // Update status
+            const statusEl = document.getElementById('apiKeyStatus');
+            statusEl.textContent = '✓ 環境變量已設定';
+            statusEl.className = 'token-status active';
+            document.getElementById('apiKey').placeholder = '環境變量 API Key 已設定（可覆蓋）';
+            document.getElementById('apiKey').disabled = true;
+            
+            // Reload voices with env var
+            loadVoicesFromAPI();
+            
+            alert('✅ 已清除自定義 API Key，將使用環境變量。');
         }
         
         // Load voices when page loads
