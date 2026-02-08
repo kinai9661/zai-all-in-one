@@ -817,6 +817,11 @@ async function handleImageGeneration(request) {
             rm_label_watermark: body.remove_watermark !== false && body.rm_label_watermark !== false
         };
         
+        // Add adult content parameter if provided
+        if (body.adult_content === true) {
+            upstreamBody.adult_content = true;
+        }
+        
         if (!CONFIG.IMAGE_RATIOS.includes(upstreamBody.ratio)) {
             upstreamBody.ratio = "1:1";
         }
@@ -1297,21 +1302,21 @@ __name(handleVoiceList, "handleVoiceList");
 
 function handleWebUI() {
     const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Z All-in-One API (v${CONFIG.VERSION})</title>
     <style>
-        :root { 
-            --bg: #0a0e1a; 
-            --panel: #151b2e; 
+        :root {
+            --bg: #0a0e1a;
+            --panel: #151b2e;
             --panel-hover: #1a2235;
-            --text: #e2e8f0; 
-            --accent: #10b981; 
+            --text: #e2e8f0;
+            --accent: #10b981;
             --accent-hover: #059669;
             --accent-light: rgba(16, 185, 129, 0.1);
-            --border: #2d3748; 
+            --border: #2d3748;
             --tab-inactive: #64748b;
             --success: #10b981;
             --error: #ef4444;
@@ -1750,127 +1755,145 @@ function handleWebUI() {
     <div class="container">
         <div class="header-section">
             <h1>🚀 Z All-in-One API <span class="badge">v${CONFIG.VERSION}</span></h1>
-            <p class="subtitle">Chat + Image + Audio - Complete Z.ai API Suite</p>
+            <p class="subtitle">聊天 + 圖像 + 音頻 - 完整的 Z.ai API 套件</p>
         </div>
         
-        <!-- Global Token Section -->
+        <!-- API Key Section -->
         <div class="token-section">
             <div class="token-header">
                 <div class="token-title">
-                    🔑 Session Token
+                    🔑 API Key
                 </div>
-                <div class="token-status inactive" id="tokenStatus">Not Set</div>
+                <div class="token-status inactive" id="apiKeyStatus">未設定</div>
             </div>
             <div class="token-input-group">
-                <input type="text" id="globalToken" placeholder="Paste your session token here (works for both Image & Audio)">
-                <button onclick="setGlobalToken()">Set Token</button>
+                <input type="text" id="apiKey" placeholder="輸入您的 API Key（用於圖像和音頻）">
+                <button onclick="setApiKey()">設定 API Key</button>
             </div>
             <div class="token-guide">
-                <strong>📖 How to get your token:</strong><br>
-                1. Open <code>image.z.ai</code> or <code>audio.z.ai</code> in your browser and login<br>
-                2. Press <code>F12</code> to open DevTools → Go to <strong>Application</strong> tab<br>
-                3. In the left sidebar, expand <strong>Cookies</strong> → Click on the website URL<br>
-                4. Find the <code>session</code> cookie and copy its <strong>Value</strong> (starts with "ey")<br>
-                5. Paste it above and click "Set Token"
+                <strong>📖 如何獲取您的 API Key：</strong><br>
+                1. 在瀏覽器中打開 <code>image.z.ai</code> 或 <code>audio.z.ai</code> 並登入<br>
+                2. 按 <code>F12</code> 開啟開發者工具 → 前往 <strong>應用程式</strong> 分頁<br>
+                3. 在左側邊欄展開 <strong>Cookies</strong> → 點擊網站 URL<br>
+                4. 找到 <code>session</code> cookie 並複製其 <strong>值</strong>（以 "ey" 開頭）<br>
+                5. 將其貼上並點擊「設定 API Key」
             </div>
         </div>
         
+        <!-- API Endpoint Section -->
         <div class="card">
-            <div class="label">API Endpoint</div>
+            <div class="label">API 端點地址</div>
             <input type="text" id="apiUrl" readonly onclick="this.select()" value="">
             <script>document.getElementById('apiUrl').value = window.location.origin + '/v1';</script>
+            <div class="info">點擊上方輸入框可複製 API 地址</div>
         </div>
         
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('text')">💬 Text Chat</button>
-            <button class="tab" onclick="switchTab('image')">🎨 Image Generation</button>
-            <button class="tab" onclick="switchTab('audio')">🎵 Audio Synthesis</button>
+            <button class="tab active" onclick="switchTab('text')">💬 文字聊天</button>
+            <button class="tab" onclick="switchTab('image')">🎨 圖像生成</button>
+            <button class="tab" onclick="switchTab('audio')">🎵 音頻合成</button>
         </div>
         
         <!-- TEXT CHAT TAB -->
         <div id="text" class="tab-content active">
             <div class="card">
-                <div class="label">Session Token (Optional - "free" for anonymous)</div>
-                <input type="text" id="textToken" placeholder='Enter "free" for anonymous or paste your token'>
-                <div class="info">Use "free" for anonymous chat or paste your session token for authenticated access.</div>
+                <div class="label">Session Token（可選 - 使用 "free" 匿名訪問）</div>
+                <input type="text" id="textToken" placeholder='輸入 "free" 匿名訪問或貼上您的 token'>
+                <div class="info">使用 "free" 進行匿名聊天，或貼上您的 session token 進行認證訪問。</div>
             </div>
             
             <div class="card">
-                <div class="label">Model</div>
+                <div class="label">模型</div>
                 <select id="textModel">
                     ${CONFIG.MODEL_LIST.map((m) => `<option value="${m}">${m}</option>`).join("")}
                 </select>
                 
-                <div class="label">Message</div>
-                <textarea id="textPrompt" rows="4" placeholder="Enter your message...">Hello! Introduce yourself briefly.</textarea>
+                <div class="label">訊息</div>
+                <textarea id="textPrompt" rows="4" placeholder="輸入您的訊息...">你好！請簡單介紹一下你自己。</textarea>
                 
-                <button onclick="sendTextRequest()">Send Message</button>
+                <button onclick="sendTextRequest()">發送訊息</button>
             </div>
             
-            <div class="output" id="textOutput">Ready to chat...</div>
+            <div class="output" id="textOutput">準備聊天...</div>
         </div>
         
         <!-- IMAGE GENERATION TAB -->
         <div id="image" class="tab-content">
             <div class="card">
-                <div class="label">Prompt</div>
-                <textarea id="imagePrompt" rows="3" placeholder="Describe the image you want to generate...">A beautiful sunset over mountains with vibrant colors</textarea>
+                <div class="label">提示詞</div>
+                <textarea id="imagePrompt" rows="3" placeholder="描述您想要生成的圖像...">美麗的日落，山脈上充滿鮮豔的色彩</textarea>
                 
-                <div class="label">Aspect Ratio</div>
+                <div class="label">寬高比</div>
                 <select id="imageRatio">
-                    <option value="1:1">1:1 (Square)</option>
-                    <option value="3:4">3:4 (Portrait)</option>
-                    <option value="4:3">4:3 (Landscape)</option>
-                    <option value="16:9">16:9 (Widescreen)</option>
-                    <option value="9:16">9:16 (Mobile)</option>
-                    <option value="21:9">21:9 (Ultrawide)</option>
-                    <option value="9:21">9:21 (Tall)</option>
+                    <option value="1:1">1:1 (正方形)</option>
+                    <option value="3:4">3:4 (直向)</option>
+                    <option value="4:3">4:3 (橫向)</option>
+                    <option value="16:9">16:9 (寬螢幕)</option>
+                    <option value="9:16">9:16 (手機)</option>
+                    <option value="21:9">21:9 (超寬)</option>
+                    <option value="9:21">9:21 (長條)</option>
                 </select>
                 
-                <div class="label">Resolution</div>
+                <div class="label">解析度</div>
                 <select id="imageResolution">
                     <option value="1K">1K</option>
                     <option value="2K">2K</option>
                 </select>
                 
-                <button onclick="generateImage()">Generate Image</button>
+                <div class="label">生成數量</div>
+                <select id="imageCount">
+                    <option value="1">1 張</option>
+                    <option value="2">2 張</option>
+                    <option value="3">3 張</option>
+                    <option value="4">4 張</option>
+                </select>
+                
+                <div style="margin-bottom: 18px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #cbd5e1; font-size: 13px; font-weight: 600;">
+                        <input type="checkbox" id="adultContent" style="width: auto; margin: 0;">
+                        啟用成人圖片生成
+                    </label>
+                    <div class="info">⚠️ 啟用後將生成成人內容，請謹慎使用</div>
+                </div>
+                
+                <button onclick="generateImage()">生成圖像</button>
             </div>
             
-            <div class="output" id="imageOutput">Ready to generate...</div>
+            <div class="output" id="imageOutput">準備生成...</div>
             <div id="imageContainer"></div>
         </div>
         
         <!-- AUDIO SYNTHESIS TAB -->
         <div id="audio" class="tab-content">
             <div class="tabs" style="margin-bottom: 0; border-bottom: 1px solid var(--border);">
-                <button class="tab active" onclick="switchAudioTab('synthesis')">Voice Synthesis</button>
-                <button class="tab" onclick="switchAudioTab('cloning')">Voice Cloning</button>
+                <button class="tab active" onclick="switchAudioTab('synthesis')">語音合成</button>
+                <button class="tab" onclick="switchAudioTab('cloning')">語音克隆</button>
             </div>
             
             <!-- Voice Synthesis Sub-Tab -->
             <div id="synthesis" class="tab-content active">
                 <div class="card">
-                    <div class="label">Text to Speech</div>
-                    <textarea id="audioText" rows="3" placeholder="Enter text to convert to speech...">Hello! This is a test of the Z.ai audio generation API.</textarea>
+                    <div class="label">文字轉語音</div>
+                    <textarea id="audioText" rows="3" placeholder="輸入要轉換為語音的文字...">你好！這是 Z.ai 音頻生成 API 的測試。</textarea>
                     
-                    <div class="label">Select Voice</div>
+                    <div class="label">選擇語音</div>
                     <div class="voice-grid" id="voiceGrid">
                         <!-- Voices will be loaded dynamically from API -->
                     </div>
                     
                     <div class="slider-container">
-                        <div class="label">Speech Rate <span class="slider-value" id="speedValue">1.0</span></div>
-                        <input type="range" id="audioSpeed" min="0.5" max="2.0" step="0.1" value="1.0" 
+                        <div class="label">語速 <span class="slider-value" id="speedValue">1.0</span></div>
+                        <input type="range" id="audioSpeed" min="0.5" max="2.0" step="0.1" value="1.0"
                                oninput="document.getElementById('speedValue').textContent = this.value">
                     </div>
                     
                     <div class="slider-container">
-                        <div class="label">Volume <span class="slider-value" id="volumeValue">1</span></div>
-                        <input type="range" id="audioVolume" min="0" max="10" step="1" value="1" 
+                        <div class="label">音量 <span class="slider-value" id="volumeValue">1</span></div>
+                        <input type="range" id="audioVolume" min="0" max="10" step="1" value="1"
                                oninput="document.getElementById('volumeValue').textContent = this.value">
                     </div>
                     
-                    <button onclick="generateAudio()">Generate Speech</button>
+                    <button onclick="generateAudio()">生成語音</button>
                 </div>
             </div>
             
@@ -1878,36 +1901,36 @@ function handleWebUI() {
             <div id="cloning" class="tab-content">
                 <div class="two-col">
                     <div class="card">
-                        <h3>Step 1: Upload Voice Sample</h3>
-                        <div class="label">Audio File (min 3 seconds)</div>
+                        <h3>步驟 1：上傳語音樣本</h3>
+                        <div class="label">音頻文件（最少 3 秒）</div>
                         <input type="file" id="voiceFile" accept="audio/*">
-                        <div class="info">Upload a clear audio sample of the voice you want to clone</div>
+                        <div class="info">上傳您想要克隆的清晰語音樣本</div>
                         
-                        <button onclick="uploadVoice()" class="btn-secondary">Upload Voice Sample</button>
+                        <button onclick="uploadVoice()" class="btn-secondary">上傳語音樣本</button>
                         
                         <div id="uploadStatus" class="status" style="display: none;"></div>
                     </div>
                     
                     <div class="card">
-                        <h3>Step 2: Clone Voice</h3>
-                        <div class="label">Voice Name</div>
-                        <input type="text" id="voiceName" placeholder="My Custom Voice">
+                        <h3>步驟 2：克隆語音</h3>
+                        <div class="label">語音名稱</div>
+                        <input type="text" id="voiceName" placeholder="我的自定義語音">
                         
-                        <div class="label">Sample Text (for cloning)</div>
-                        <textarea id="cloneText" rows="3" placeholder="Enter text that matches your audio sample..."></textarea>
-                        <div class="info">This should match what was said in your audio file</div>
+                        <div class="label">樣本文本（用於克隆）</div>
+                        <textarea id="cloneText" rows="3" placeholder="輸入與您的音頻樣本匹配的文字..."></textarea>
+                        <div class="info">這應該與您的音頻文件中說的內容相符</div>
                         
-                        <div class="label">Test Text (for generation)</div>
-                        <textarea id="testText" rows="3">The morning sun shines warmly, and the gentle breeze brushes your face.</textarea>
+                        <div class="label">測試文本（用於生成）</div>
+                        <textarea id="testText" rows="3">早晨的陽光溫暖地照耀著，微風輕輕拂過你的臉龐。</textarea>
                         
-                        <button onclick="cloneVoice()">Clone Voice</button>
+                        <button onclick="cloneVoice()">克隆語音</button>
                         
                         <div id="cloneStatus" class="status" style="display: none;"></div>
                     </div>
                 </div>
             </div>
             
-            <div class="output" id="audioOutput">Ready to generate...</div>
+            <div class="output" id="audioOutput">準備生成...</div>
             <div id="audioContainer"></div>
         </div>
     </div>
@@ -1917,15 +1940,15 @@ function handleWebUI() {
         window.addEventListener('DOMContentLoaded', function() {
             document.getElementById('apiUrl').value = window.location.origin + '/v1';
             
-            // Load token from localStorage on page load
-            const savedToken = localStorage.getItem('zai_session_token');
+            // Load API key from localStorage on page load
+            const savedToken = localStorage.getItem('zai_api_key');
             if (savedToken) {
-                globalSessionToken = savedToken;
-                document.getElementById('globalToken').value = savedToken;
+                apiKey = savedToken;
+                document.getElementById('apiKey').value = savedToken;
                 
                 // Update status
-                const statusEl = document.getElementById('tokenStatus');
-                statusEl.textContent = '✓ Active';
+                const statusEl = document.getElementById('apiKeyStatus');
+                statusEl.textContent = '✓ 已設定';
                 statusEl.className = 'token-status active';
                 
                 // Load voices with saved token
@@ -1935,14 +1958,14 @@ function handleWebUI() {
         
         let selectedVoice = { name: 'Lila', id: 'system_001' };
         let uploadedFileId = null;
-        let globalSessionToken = '';
+        let apiKey = '';
         
-        // Set global token function
-        function setGlobalToken() {
-            let token = document.getElementById('globalToken').value.trim();
+        // Set API key function
+        function setApiKey() {
+            let token = document.getElementById('apiKey').value.trim();
             
             if (!token) {
-                alert('Please enter a token');
+                alert('請輸入 API Key');
                 return;
             }
             
@@ -1956,32 +1979,32 @@ function handleWebUI() {
                 if (match) {
                     token = 'session=' + match[1];
                 } else {
-                    alert('Invalid token format. Token should start with "ey" (JWT) or "session="');
+                    alert('無效的 token 格式。Token 應以 "ey" (JWT) 或 "session=" 開頭');
                     return;
                 }
             }
             
-            globalSessionToken = token;
-            document.getElementById('globalToken').value = token;
+            apiKey = token;
+            document.getElementById('apiKey').value = token;
             
             // Save to localStorage
-            localStorage.setItem('zai_session_token', token);
+            localStorage.setItem('zai_api_key', token);
             
             // Update status
-            const statusEl = document.getElementById('tokenStatus');
-            statusEl.textContent = '✓ Active';
+            const statusEl = document.getElementById('apiKeyStatus');
+            statusEl.textContent = '✓ 已設定';
             statusEl.className = 'token-status active';
             
             // Reload voices automatically
             loadVoicesFromAPI();
             
-            alert('✅ Token set successfully! Voices list updated.');
+            alert('✅ API Key 設定成功！語音列表已更新。');
         }
         
         // Load voices when page loads
         window.addEventListener('DOMContentLoaded', function() {
             // Only load if not already loaded by token restoration
-            if (!globalSessionToken) {
+            if (!apiKey) {
                 loadVoicesFromAPI();
             }
         });
@@ -2031,10 +2054,10 @@ function handleWebUI() {
         // Load voices from API
         async function loadVoicesFromAPI() {
             const grid = document.getElementById('voiceGrid');
-            const token = globalSessionToken || '';
+            const token = apiKey || '';
             
             // Show loading state
-            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 20px;">Loading voices...</div>';
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 20px;">載入語音中...</div>';
             
             try {
                 const headers = {};
@@ -2047,7 +2070,7 @@ function handleWebUI() {
                 const response = await fetch('/v1/audio/voices', { headers });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to load voices: ' + response.status);
+                    throw new Error('載入語音失敗: ' + response.status);
                 }
                 
                 const data = await response.json();
@@ -2087,7 +2110,7 @@ function handleWebUI() {
                 
                 // Add custom voices from API
                 if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-                    console.log('Found ' + data.data.length + ' custom voices in API');
+                    console.log('找到 ' + data.data.length + ' 個自定義語音');
                     
                     data.data.forEach((voice) => {
                         const card = document.createElement('div');
@@ -2105,7 +2128,7 @@ function handleWebUI() {
                 }
                 
             } catch (e) {
-                console.error('Failed to load voices:', e);
+                console.error('載入語音失敗:', e);
                 
                 // On error, still show official voices
                 grid.innerHTML = '';
@@ -2133,7 +2156,7 @@ function handleWebUI() {
                 // Show error message below voices
                 const errorDiv = document.createElement('div');
                 errorDiv.style.cssText = 'grid-column: 1/-1; text-align: center; color: #ef4444; padding: 10px; font-size: 11px;';
-                errorDiv.textContent = '⚠️ Could not load custom voices: ' + e.message;
+                errorDiv.textContent = '⚠️ 無法載入自定義語音: ' + e.message;
                 grid.appendChild(errorDiv);
             }
         }
@@ -2141,24 +2164,24 @@ function handleWebUI() {
         // Upload voice sample
         async function uploadVoice() {
             const fileInput = document.getElementById('voiceFile');
-            const token = globalSessionToken || '';
+            const token = apiKey || '';
             const statusDiv = document.getElementById('uploadStatus');
             
             if (!fileInput.files[0]) {
-                statusDiv.textContent = '❌ Please select an audio file';
+                statusDiv.textContent = '❌ 請選擇音頻文件';
                 statusDiv.className = 'status error';
                 statusDiv.style.display = 'block';
                 return;
             }
             
             if (!token) {
-                statusDiv.textContent = '❌ Please set your session token first';
+                statusDiv.textContent = '❌ 請先設定您的 API Key';
                 statusDiv.className = 'status error';
                 statusDiv.style.display = 'block';
                 return;
             }
             
-            statusDiv.textContent = '⏳ Uploading...';
+            statusDiv.textContent = '⏳ 上傳中...';
             statusDiv.className = 'status';
             statusDiv.style.display = 'block';
             
@@ -2183,16 +2206,16 @@ function handleWebUI() {
                     uploadedFileId = data.data.voice_file_id;
                     const transcript = data.data.text;
                     
-                    statusDiv.textContent = '✅ Upload successful!';
+                    statusDiv.textContent = '✅ 上傳成功！';
                     statusDiv.className = 'status success';
                     document.getElementById('cloneText').value = transcript;
-                    document.getElementById('audioOutput').textContent = '✅ Voice sample uploaded successfully!';
+                    document.getElementById('audioOutput').textContent = '✅ 語音樣本上傳成功！';
                 } else {
-                    statusDiv.textContent = '❌ Upload failed: ' + (data.message || 'Unknown error');
+                    statusDiv.textContent = '❌ 上傳失敗: ' + (data.message || '未知錯誤');
                     statusDiv.className = 'status error';
                 }
             } catch (e) {
-                statusDiv.textContent = '❌ Error: ' + e.message;
+                statusDiv.textContent = '❌ 錯誤: ' + e.message;
                 statusDiv.className = 'status error';
             }
         }
@@ -2200,33 +2223,33 @@ function handleWebUI() {
         // Clone voice
         async function cloneVoice() {
             const statusDiv = document.getElementById('cloneStatus');
-            const token = globalSessionToken || '';
+            const token = apiKey || '';
             const voiceName = document.getElementById('voiceName').value;
             const cloneText = document.getElementById('cloneText').value;
             const testText = document.getElementById('testText').value;
             
             if (!token) {
-                statusDiv.textContent = '❌ Please set your session token first';
+                statusDiv.textContent = '❌ 請先設定您的 API Key';
                 statusDiv.className = 'status error';
                 statusDiv.style.display = 'block';
                 return;
             }
             
             if (!uploadedFileId) {
-                statusDiv.textContent = '❌ Please upload a voice sample first';
+                statusDiv.textContent = '❌ 請先上傳語音樣本';
                 statusDiv.className = 'status error';
                 statusDiv.style.display = 'block';
                 return;
             }
             
             if (!voiceName) {
-                statusDiv.textContent = '❌ Please enter a voice name';
+                statusDiv.textContent = '❌ 請輸入語音名稱';
                 statusDiv.className = 'status error';
                 statusDiv.style.display = 'block';
                 return;
             }
             
-            statusDiv.textContent = '⏳ Cloning voice...';
+            statusDiv.textContent = '⏳ 克隆語音中...';
             statusDiv.className = 'status';
             statusDiv.style.display = 'block';
             
@@ -2250,7 +2273,7 @@ function handleWebUI() {
                 const data = await response.json();
                 
                 if (response.ok && data.code === 200) {
-                    statusDiv.textContent = '✅ Voice cloned successfully!';
+                    statusDiv.textContent = '✅ 語音克隆成功！';
                     statusDiv.className = 'status success';
                     
                     const audioUrl = data.data.show_audio;
@@ -2263,7 +2286,7 @@ function handleWebUI() {
                     audio.src = audioUrl;
                     audioContainer.appendChild(audio);
                     
-                    document.getElementById('audioOutput').textContent = '✅ Voice "' + voiceName + '" cloned successfully!';
+                    document.getElementById('audioOutput').textContent = '✅ 語音 "' + voiceName + '" 克隆成功！';
                     
                     // Reload voices list to include the new voice
                     await loadVoicesFromAPI();
@@ -2274,11 +2297,11 @@ function handleWebUI() {
                         if (synthTab) synthTab.click();
                     }, 2000);
                 } else {
-                    statusDiv.textContent = '❌ Cloning failed: ' + (data.message || 'Unknown error');
+                    statusDiv.textContent = '❌ 克隆失敗: ' + (data.message || '未知錯誤');
                     statusDiv.className = 'status error';
                 }
             } catch (e) {
-                statusDiv.textContent = '❌ Error: ' + e.message;
+                statusDiv.textContent = '❌ 錯誤: ' + e.message;
                 statusDiv.className = 'status error';
             }
         }
@@ -2290,7 +2313,7 @@ function handleWebUI() {
             const token = document.getElementById('textToken').value.trim();
             const output = document.getElementById('textOutput');
             
-            output.textContent = 'Sending request...';
+            output.textContent = '發送請求中...';
             
             try {
                 const headers = { 'Content-Type': 'application/json' };
@@ -2310,7 +2333,7 @@ function handleWebUI() {
                 
                 if (!response.ok) {
                     const err = await response.text();
-                    output.textContent = 'Error: ' + err;
+                    output.textContent = '錯誤: ' + err;
                     return;
                 }
                 
@@ -2339,7 +2362,7 @@ function handleWebUI() {
                     }
                 }
             } catch (e) {
-                output.textContent = 'Error: ' + e.message;
+                output.textContent = '錯誤: ' + e.message;
             }
         }
         
@@ -2348,50 +2371,88 @@ function handleWebUI() {
             const prompt = document.getElementById('imagePrompt').value;
             const ratio = document.getElementById('imageRatio').value;
             const resolution = document.getElementById('imageResolution').value;
-            const token = globalSessionToken || '';
+            const count = parseInt(document.getElementById('imageCount').value);
+            const adultContent = document.getElementById('adultContent').checked;
+            const token = apiKey || '';
             const output = document.getElementById('imageOutput');
             const imageContainer = document.getElementById('imageContainer');
             
             if (!token) {
-                output.textContent = '❌ Please set your session token first';
+                output.textContent = '❌ 請先設定您的 API Key';
                 return;
             }
             
-            output.textContent = '⏳ Generating image...';
+            output.textContent = '⏳ 生成圖像中...';
             imageContainer.innerHTML = '';
             
             try {
                 const headers = { 'Content-Type': 'application/json' };
                 headers['Authorization'] = 'Bearer ' + token;
                 
-                const response = await fetch('/v1/images/generations', {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({ 
-                        prompt, 
-                        ratio, 
-                        resolution,
-                        remove_watermark: true
-                    })
-                });
+                const requestBody = {
+                    prompt,
+                    ratio,
+                    resolution,
+                    remove_watermark: true
+                };
                 
-                const data = await response.json();
+                // Add adult content parameter if enabled
+                if (adultContent) {
+                    requestBody.adult_content = true;
+                }
                 
-                if (response.ok && data.data?.[0]?.url) {
-                    const img = document.createElement('img');
-                    img.src = data.data[0].url;
-                    img.onload = () => {
-                        output.textContent = '✅ Image generated successfully!';
-                    };
-                    img.onerror = () => {
-                        output.textContent = '❌ Failed to load image';
-                    };
-                    imageContainer.appendChild(img);
+                // Generate multiple images
+                const promises = [];
+                for (let i = 0; i < count; i++) {
+                    promises.push(
+                        fetch('/v1/images/generations', {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify(requestBody)
+                        })
+                    );
+                }
+                
+                const responses = await Promise.all(promises);
+                let successCount = 0;
+                
+                // Create a grid container for multiple images
+                if (count > 1) {
+                    imageContainer.style.display = 'grid';
+                    imageContainer.style.gridTemplateColumns = count > 2 ? 'repeat(2, 1fr)' : 'repeat(' + count + ', 1fr)';
+                    imageContainer.style.gap = '20px';
+                }
+                
+                for (let i = 0; i < responses.length; i++) {
+                    const response = responses[i];
+                    const data = await response.json();
+                    
+                    if (response.ok && data.data?.[0]?.url) {
+                        successCount++;
+                        const imgWrapper = document.createElement('div');
+                        imgWrapper.style.cssText = 'display: flex; flex-direction: column; align-items: center;';
+                        
+                        const img = document.createElement('img');
+                        img.src = data.data[0].url;
+                        img.style.cssText = 'width: 100%; border-radius: 8px; border: 2px solid var(--border);';
+                        
+                        const label = document.createElement('div');
+                        label.textContent = '圖片 ' + (i + 1);
+                        label.style.cssText = 'margin-top: 10px; color: #94a3b8; font-size: 12px;';
+                        
+                        imgWrapper.appendChild(img);
+                        imgWrapper.appendChild(label);
+                        imageContainer.appendChild(imgWrapper);
+                    }
+                }
+                
+                if (successCount > 0) {
+                    output.textContent = '✅ 成功生成 ' + successCount + ' 張圖像！';
                 } else {
-                    output.textContent = '❌ Error: ' + (data.error || data.message || 'Unknown error');
+                    output.textContent = '❌ 圖像生成失敗';
                 }
             } catch (e) {
-                output.textContent = '❌ Error: ' + e.message;
+                output.textContent = '❌ 錯誤: ' + e.message;
             }
         }
         
@@ -2400,16 +2461,16 @@ function handleWebUI() {
             const text = document.getElementById('audioText').value;
             const speed = parseFloat(document.getElementById('audioSpeed').value);
             const volume = parseInt(document.getElementById('audioVolume').value);
-            const token = globalSessionToken || '';
+            const token = apiKey || '';
             const output = document.getElementById('audioOutput');
             const audioContainer = document.getElementById('audioContainer');
             
             if (!token) {
-                output.textContent = '❌ Please set your session token first';
+                output.textContent = '❌ 請先設定您的 API Key';
                 return;
             }
             
-            output.textContent = '⏳ Generating audio...';
+            output.textContent = '⏳ 生成音頻中...';
             audioContainer.innerHTML = '';
             
             try {
@@ -2444,18 +2505,18 @@ function handleWebUI() {
                     const downloadBtn = document.createElement('a');
                     downloadBtn.href = url;
                     downloadBtn.download = 'audio-' + Date.now() + '.wav';
-                    downloadBtn.textContent = '⬇️ Download Audio';
+                    downloadBtn.textContent = '⬇️ 下載音頻';
                     downloadBtn.className = 'download-btn';
                     audioContainer.appendChild(downloadBtn);
                     
-                    output.textContent = '✅ Audio generated successfully!\\n\\nVoice: ' + selectedVoice.name + ' | Speed: ' + speed + 'x | Volume: ' + volume;
+                    output.textContent = '✅ 音頻生成成功！\\n\\n語音: ' + selectedVoice.name + ' | 語速: ' + speed + 'x | 音量: ' + volume;
                     audio.play();
                 } else {
                     const error = await response.json();
-                    output.textContent = '❌ Error: ' + (error.error || error.message || 'Unknown error');
+                    output.textContent = '❌ 錯誤: ' + (error.error || error.message || '未知錯誤');
                 }
             } catch (e) {
-                output.textContent = '❌ Error: ' + e.message;
+                output.textContent = '❌ 錯誤: ' + e.message;
             }
         }
     </script>
