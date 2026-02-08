@@ -1814,6 +1814,11 @@ function handleWebUI() {
                 <input type="text" id="apiKey" placeholder="輸入您的 API Key（用於圖像和音頻）">
                 <button onclick="setApiKey()">設定 API Key</button>
                 <button onclick="clearApiKey()" class="btn-secondary" style="width: auto; padding: 10px 20px;">清除</button>
+                <button onclick="toggleApiKeyVisibility()" id="toggleKeyBtn" class="btn-secondary" style="width: auto; padding: 10px 20px;">👁️ 顯示</button>
+            </div>
+            <div class="token-display" id="apiKeyDisplay" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; font-family: monospace; font-size: 12px; word-break: break-all; color: #94a3b8;">
+                <div style="margin-bottom: 5px; color: #cbd5e1; font-weight: 600;">當前 API Key：</div>
+                <span id="apiKeyValue">未設定</span>
             </div>
             <div class="token-guide">
                 <strong>📖 如何獲取您的 API Key：</strong><br>
@@ -2064,6 +2069,13 @@ function handleWebUI() {
             statusEl.textContent = '✓ 已設定（覆蓋環境變量）';
             statusEl.className = 'token-status active';
             
+            // Update display if visible
+            if (apiKeyVisible) {
+                const valueEl = document.getElementById('apiKeyValue');
+                valueEl.textContent = token;
+                valueEl.style.color = '#94a3b8';
+            }
+            
             // Reload voices automatically
             loadVoicesFromAPI();
             
@@ -2084,10 +2096,46 @@ function handleWebUI() {
             document.getElementById('apiKey').placeholder = '環境變量 API Key 已設定（可覆蓋）';
             document.getElementById('apiKey').disabled = true;
             
+            // Update display if visible
+            if (apiKeyVisible) {
+                const valueEl = document.getElementById('apiKeyValue');
+                valueEl.textContent = '環境變量 API Key（已設定）';
+                valueEl.style.color = '#4ade80';
+            }
+            
             // Reload voices with env var
             loadVoicesFromAPI();
             
             alert('✅ 已清除自定義 API Key，將使用環境變量。');
+        }
+        
+        // Toggle API key visibility
+        let apiKeyVisible = false;
+        function toggleApiKeyVisibility() {
+            apiKeyVisible = !apiKeyVisible;
+            const displayEl = document.getElementById('apiKeyDisplay');
+            const valueEl = document.getElementById('apiKeyValue');
+            const btnEl = document.getElementById('toggleKeyBtn');
+            
+            if (apiKeyVisible) {
+                displayEl.style.display = 'block';
+                btnEl.textContent = '🙈 隱藏';
+                
+                // Show current API key
+                if (useEnvVar) {
+                    valueEl.textContent = '環境變量 API Key（已設定）';
+                    valueEl.style.color = '#4ade80';
+                } else if (apiKey) {
+                    valueEl.textContent = apiKey;
+                    valueEl.style.color = '#94a3b8';
+                } else {
+                    valueEl.textContent = '未設定';
+                    valueEl.style.color = '#ef4444';
+                }
+            } else {
+                displayEl.style.display = 'none';
+                btnEl.textContent = '👁️ 顯示';
+            }
         }
         
         // Load voices when page loads

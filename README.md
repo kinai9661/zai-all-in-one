@@ -16,6 +16,7 @@ Z All-in-One API 是一個將 Z.ai 服務（聊天、圖像、音頻）包裝成
 ### Web 介面功能
 - **繁體中文介面**：完整的中文使用者介面，方便使用
 - **API Key 管理**：安全的 token 儲存，使用 localStorage
+- **API Key 顯示**：可選擇顯示或隱藏當前 API Key，支援完整顯示或環境變量狀態
 - **API 端點顯示**：顯示當前 API 地址，支援點擊複製
 - **多張圖片生成**：一次可生成 1-4 張圖片
 - **成人內容選項**：可選擇是否生成成人圖片
@@ -30,6 +31,7 @@ Z All-in-One API 是一個將 Z.ai 服務（聊天、圖像、音頻）包裝成
 ### Web Interface
 - **Traditional Chinese UI**: Full Chinese interface for easy use
 - **API Key Management**: Secure token storage with localStorage
+- **API Key Display**: Toggle visibility to show/hide current API key, supports full display or environment variable status
 - **API Endpoint Display**: Shows current API address with copy functionality
 
 ## Features
@@ -233,6 +235,7 @@ curl http://localhost:8787/v1/audio/speech \
 Access the web UI at `http://localhost:8787/` for:
 - **Traditional Chinese Interface**: Full Chinese UI for easy navigation
 - **API Key Management**: Secure token storage with localStorage
+- **API Key Display**: Toggle visibility to show/hide current API key, supports full display or environment variable status
 - **API Endpoint Display**: Shows current API address with copy functionality
 - **Interactive Testing**: Test all services directly in browser
 - **Voice Selection**: Choose from official and custom voices
@@ -260,6 +263,9 @@ Returns all available models for chat, image, and audio. / 返回聊天、圖像
 - Tokens are stored locally in browser (not on server) / Token 儲存在瀏覽器本地（不在伺服器上）
 - Web UI is fully localized in Traditional Chinese / Web 介面已完全本地化為繁體中文
 - API Key is saved in localStorage and persists across page refreshes / API Key 儲存在 localStorage 中，重新整理頁面後仍然有效
+- **API Key visibility can be toggled in Web UI** / **Web UI 中可切換 API Key 顯示/隱藏**
+- When using environment variable, API Key display shows "環境變量 API Key（已設定）" in green / 使用環境變量時，API Key 顯示為綠色的「環境變量 API Key（已設定）」
+- When using custom API Key, the full key is displayed in gray / 使用自定義 API Key 時，顯示完整的 key（灰色）
 - Multiple images can be generated simultaneously (1-4 images) / 可同時生成多張圖片（1-4 張）
 - Adult content generation is optional and requires explicit enablement / 成人內容生成為可選功能，需要明確啟用
 
