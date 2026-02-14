@@ -39,6 +39,9 @@ Z All-in-One API 是一個將 Z.ai 服務（聊天、圖像、音頻）包裝成
 ### 1. Chat Completion
 - **Endpoint**: `/v1/chat/completions`
 - **Models**:
+  - GLM-5
+  - GLM-5-thinking
+  - GLM-5-V (vision)
   - GLM-4.7
   - GLM-4.7-thinking
   - GLM-4.5
@@ -254,7 +257,7 @@ Returns all available models for chat, image, and audio. / 返回聊天、圖像
 
 ## Notes / 注意事項
 
-- Chat supports vision models (GLM-4.5-V, GLM-4.6-V) with image URLs / 聊天支援視覺模型（GLM-4.5-V, GLM-4.6-V），可使用圖片 URL
+- Chat supports vision models (GLM-5-V, GLM-4.5-V, GLM-4.6-V) with image URLs / 聊天支援視覺模型（GLM-5-V, GLM-4.5-V, GLM-4.6-V），可使用圖片 URL
 - Image generation requires valid session token / 圖像生成需要有效的 session token
 - Audio supports custom voice cloning with uploaded samples / 音頻支援使用上傳的樣本進行自定義語音克隆
 - All endpoints support CORS for web applications / 所有端點都支援 CORS，適用於網頁應用程式

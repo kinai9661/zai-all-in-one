@@ -30,6 +30,9 @@ const CONFIG = {
     
     // Model mappings for chat
     MODEL_MAPPING: {
+        "GLM-5": "glm-5",
+        "GLM-5-thinking": "glm-5-thinking",
+        "GLM-5-V": "glm-5v",
         "GLM-4.7": "glm-4.7",
         "GLM-4.5": "0727-360B-API",
         "GLM-4.6": "GLM-4-6-API-V1",
@@ -39,11 +42,11 @@ const CONFIG = {
         "0808-360B-DR": "0808-360B-DR"
     },
     MODEL_LIST: [
-        "GLM-4.7", "GLM-4.7-thinking", "GLM-4.5", "GLM-4.6",
-        "GLM-4.5-thinking", "GLM-4.6-thinking", "GLM-4.5-V",
-        "GLM-4.6-V", "GLM-4.5-Air", "0808-360B-DR"
+        "GLM-5", "GLM-5-thinking", "GLM-5-V", "GLM-4.7", "GLM-4.7-thinking",
+        "GLM-4.5", "GLM-4.6", "GLM-4.5-thinking", "GLM-4.6-thinking",
+        "GLM-4.5-V", "GLM-4.6-V", "GLM-4.5-Air", "0808-360B-DR"
     ],
-    VISION_MODELS: ["glm-4.5v", "glm-4.6v"],
+    VISION_MODELS: ["glm-5v", "glm-4.5v", "glm-4.6v"],
     VISION_MCP_SERVERS: ["vlm-image-search", "vlm-image-recognition", "vlm-image-processing"],
     
     // Image options
