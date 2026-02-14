@@ -1,4 +1,4 @@
-name = "z-all-in-one"
+name = "zai-all-in-one"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
