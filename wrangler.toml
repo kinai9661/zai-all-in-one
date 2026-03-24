@@ -1,4 +1,4 @@
-name = "z-all-in-one"
+name = "zai-all-in-one"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
@@ -8,7 +8,7 @@ VERSION = "1.0.0"
 # Default API key (optional - can be overridden by environment variables)
 # Set this in your .dev.vars file for local development
 # or in Cloudflare dashboard for production
-DEFAULT_API_KEY = ""
+DEFAULT_API_KEY = "session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0YTdmNzEwYy04Y2EwLTQ5ZTItYTQ4Mi1iMGIyY2JmYmYzMzQiLCJjbGllbnRfaWQiOiJjbGllbnRfbzNJNlg4c0U4U0N0VEhVV2RNSWh0ZyIsInNjb3BlcyI6WyJvcGVuaWQiLCJwcm9maWxlIiwiZW1haWwiXSwiaXNzIjoiaHR0cHM6Ly9vcGVud2VidWkuZXhhbXBsZS5jb20iLCJpYXQiOjE3NzQzMzQwODksImV4cCI6MTc3NjkyNjA4OSwianRpIjoiZk1jUkNDN1UtdnVRMUVDU0NRQkR0ZyIsInRva2VuX3R5cGUiOiJhY2Nlc3NfdG9rZW4ifQ.HsCbBgzJP-LbZb6bM4VG1_yzLkobjEefSLTT6_Aw10A"
 
 [env.production]
 name = "z-all-in-one"
